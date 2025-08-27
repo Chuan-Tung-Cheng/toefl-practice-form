@@ -310,6 +310,9 @@
         const CONFIG = {
             // n8n webhook URL - 請替換為你的實際地址
             N8N_WEBHOOK_URL: 'https://albert-cheng.app.n8n.cloud/workflow/j94ZPvTbSlrKMpDm',
+
+            // 新增：n8n 提取題目資料的 API URL
+            N8N_FETCH_URL: 'https://albert-cheng.app.n8n.cloud/webhook/get-toefl-practice_from_sheet_practicedata', // 貼上你的新 API URL
             // 是否為測試模式
             TEST_MODE: False
         };
@@ -333,30 +336,35 @@
         }
         
         // ===== 從URL載入題目 =====
-        function loadQuestionsFromURL() {
+        async function loadQuestionsFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
-            const encodedData = urlParams.get('data');
+            // 改成讀取 'id'
+            const practiceIdFromUrl = urlParams.get('id');
             
-            if (encodedData) {
+            if (practiceIdFromUrl) {
                 try {
-                    const decodedData = decodeURIComponent(encodedData);
-                    const data = JSON.parse(decodedData);
+                    // 發送到 n8n API 的請求
+                    const response = await fetch(`${CONFIG.N8N_FETCH_URL}?id=${practiceIdFromUrl}`);
+        
+                    if (!response.ok) {
+                        throw new Error(`伺服器錯誤: ${response.status}`);
+                    }
+        
+                    const data = await response.json();
+        
                     questionsData = data.questions || [];
-                    practiceId = data.practiceId || practiceId;
+                    practiceId = data.practiceId || practiceIdFromUrl;
                     document.getElementById('practiceId').textContent = practiceId;
                     renderQuestions();
+
                 } catch (error) {
-                    console.error('解析題目數據失敗:', error);
-                    if (CONFIG.TEST_MODE) {
-                        loadTestData();
-                    } else {
-                        showError('無法載入題目，請重新嘗試');
-                    }
+                    console.error('獲取題目數據失敗:', error);
+                    showError('無法載入題目，請重新嘗試或確認連結是否正確');
                 }
             } else if (CONFIG.TEST_MODE) {
                 loadTestData();
             } else {
-                showError('未提供題目數據');
+                showError('未提供有效的練習ID');
             }
         }
         
@@ -602,4 +610,5 @@
 </body>
 
 </html>
+
 
