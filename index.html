@@ -352,7 +352,7 @@
         
                     const data = await response.json();
         
-                    questionsData = data.questions || [];
+                    questionsData = data;
                     practiceId = data.practiceId || practiceIdFromUrl;
                     document.getElementById('practiceId').textContent = practiceId;
                     renderQuestions();
@@ -601,6 +601,7 @@
 </body>
 
 </html>
+
 
 
 
