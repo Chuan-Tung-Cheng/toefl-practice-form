@@ -409,41 +409,31 @@
             const content = document.getElementById('content');
             content.innerHTML = '';
             
-            // 按文章分組
-            const articleGroups = {};
-            questionsData.forEach(q => {
-                const article = q.articleTitle || 'Article';
-                if (!articleGroups[article]) {
-                    articleGroups[article] = {
-                        title: article,
-                        content: q.articleContent || '',
-                        questions: []
-                    };
-                }
-                articleGroups[article].questions.push(q);
-            });
-            
-            // 渲染每個文章和其題目
-            Object.values(articleGroups).forEach(group => {
+            // ⭐ 新的資料結構是 { practiceId: "...", articles: [...] }
+            // 我們直接遍歷 articles 陣列
+            const articles = questionsData.articles || []; // questionsData 現在是整個 payload
+        
+            articles.forEach(article => {
                 const articleSection = document.createElement('div');
                 articleSection.className = 'article-section';
                 
                 // 文章標題
                 const titleElement = document.createElement('h2');
                 titleElement.className = 'article-title';
-                titleElement.textContent = group.title;
+                titleElement.textContent = article.title;
                 articleSection.appendChild(titleElement);
                 
-                // 文章內容
-                if (group.content) {
+                // 文章內容 (只渲染一次)
+                if (article.content) {
                     const contentElement = document.createElement('div');
                     contentElement.className = 'article-content';
-                    contentElement.textContent = group.content;
+                    // 將 \n 換行符轉換為 <br>
+                    contentElement.innerHTML = article.content.replace(/\\n/g, '<br>');
                     articleSection.appendChild(contentElement);
                 }
                 
-                // 題目
-                group.questions.forEach(q => {
+                // 遍歷該文章下的所有題目
+                article.questions.forEach(q => {
                     const questionDiv = document.createElement('div');
                     questionDiv.className = 'question';
                     questionDiv.id = `question-${q.number}`;
@@ -476,6 +466,7 @@
             // 更新進度
             updateProgress();
         }
+
         
         // ===== 處理答案選擇 =====
         function handleAnswer(questionNumber, answer) {
@@ -610,5 +601,6 @@
 </body>
 
 </html>
+
 
 
