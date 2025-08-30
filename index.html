@@ -336,54 +336,30 @@
         }
         
         // ===== 從URL載入題目 =====
-        async function loadQuestionsFromURL() {
+        function loadQuestionsFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
-            const practiceIdFromUrl = urlParams.get('id');
+            const encodedData = urlParams.get('data');
             
-            if (practiceIdFromUrl) {
-                practiceId = practiceIdFromUrl;
-                document.getElementById('practiceId').textContent = practiceId;
-                
-                // 從 n8n API 讀取題目
+            if (encodedData) {
                 try {
-                    console.log('正在從 API 載入題目...');
-                    const apiUrl = `https://chengreentea.app.n8n.cloud/webhook/get-toefl-practice_from_sheet_practicedata?id=${practiceId}`;
-                    
-                    const response = await fetch(apiUrl);
-                    const data = await response.json();
-                    
-                    if (data && data.length > 0 && data[0].data) {
-                        const practiceData = data[0].data;
-                        questionsData = [];
-                        
-                        practiceData.articles.forEach(article => {
-                            article.questions.forEach(q => {
-                                questionsData.push({
-                                    number: q.number,
-                                    articleTitle: article.title,
-                                    articleContent: article.content,
-                                    question: q.question,
-                                    options: q.options
-                                });
-                            });
-                        });
-                        
-                        console.log(`成功載入 ${questionsData.length} 題`);
-                        renderQuestions();
-                    } else {
-                        throw new Error('API 回傳資料格式錯誤');
-                    }
+                    const decodedData = decodeURIComponent(encodedData);
+                    const data = JSON.parse(decodedData);
+                    questionsData = data.questions || [];
+                    practiceId = data.practiceId || practiceId;
+                    document.getElementById('practiceId').textContent = practiceId;
+                    renderQuestions();
                 } catch (error) {
-                    console.error('載入失敗:', error);
-                    showError('無法載入題目，請重新整理頁面或聯繫管理員');
+                    console.error('解析題目數據失敗:', error);
+                    if (CONFIG.TEST_MODE) {
+                        loadTestData();
+                    } else {
+                        showError('無法載入題目，請重新嘗試');
+                    }
                 }
+            } else if (CONFIG.TEST_MODE) {
+                loadTestData();
             } else {
-                // 沒有 ID，使用測試資料
-                if (CONFIG.TEST_MODE) {
-                    loadTestData();
-                } else {
-                    showError('缺少練習 ID');
-                }
+                showError('未提供題目數據');
             }
         }
         
@@ -584,6 +560,7 @@
 </body>
 
 </html>
+
 
 
 
