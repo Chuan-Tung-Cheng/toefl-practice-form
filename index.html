@@ -346,15 +346,20 @@
                 
                 // 呼叫 API 載入題目
                 try {
-                    const response = await fetch(`https://albert-cheng.app.n8n.cloud/webhook/get-toefl-practice_from_sheet_practicedata?id=${practiceId}`);
-                    const data = await response.json();
+                    // 發送到 n8n API 的請求
+                    const response = await fetch(`${CONFIG.N8N_FETCH_URL}?id=${practiceIdFromUrl}`);
                     
-                    if (data && data.length > 0 && data[0].data) {
-                        questionsData = data[0].data;
-                        renderQuestions();
-                    } else {
-                        showError('無法載入題目資料');
+                    if (!response.ok) {
+                        throw new Error(`伺服器錯誤: ${response.status}`);
                     }
+        
+                    // 直接將收到的乾淨 JSON 資料存起來
+                    const data = await response.json();
+        
+                    questionsData = data;
+                    practiceId = data.practiceId || practiceIdFromUrl;
+                    document.getElementById('practiceId').textContent = practiceId;
+                    renderQuestions();
                 } catch (error) {
                     console.error('API 錯誤:', error);
                     showError('無法連接伺服器');
@@ -563,6 +568,7 @@
 </body>
 
 </html>
+
 
 
 
