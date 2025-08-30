@@ -339,49 +339,30 @@
         async function loadQuestionsFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
             const practiceIdFromUrl = urlParams.get('id');
-            const encodedData = urlParams.get('data');
             
-            // 優先使用 id 參數呼叫 API
             if (practiceIdFromUrl) {
                 practiceId = practiceIdFromUrl;
                 document.getElementById('practiceId').textContent = practiceId;
                 
+                // 呼叫 API 載入題目
                 try {
-                    console.log('從 API 載入題目...');
-                    const apiUrl = `https://albert-cheng.app.n8n.cloud/webhook/get-toefl-practice_from_sheet_practicedata?id=${practiceId}`;
-                    const response = await fetch(apiUrl);
-                    const responseData = await response.json();
+                    const response = await fetch(`https://albert-cheng.app.n8n.cloud/webhook/get-toefl-practice_from_sheet_practicedata?id=${practiceId}`);
+                    const data = await response.json();
                     
-                    if (responseData && responseData.length > 0 && responseData[0].data) {
-                        questionsData = responseData[0].data;
+                    if (data && data.length > 0 && data[0].data) {
+                        questionsData = data[0].data;
                         renderQuestions();
-                        return; // 成功載入，結束函數
+                    } else {
+                        showError('無法載入題目資料');
                     }
                 } catch (error) {
-                    console.error('API 載入失敗:', error);
+                    console.error('API 錯誤:', error);
+                    showError('無法連接伺服器');
                 }
-            }
-            
-            // 如果 API 失敗，嘗試從 data 參數載入
-            if (encodedData) {
-                try {
-                    const decodedData = decodeURIComponent(encodedData);
-                    const data = JSON.parse(decodedData);
-                    questionsData = data;
-                    practiceId = data.practiceId || practiceId;
-                    document.getElementById('practiceId').textContent = practiceId;
-                    renderQuestions();
-                    return;
-                } catch (error) {
-                    console.error('解析 data 參數失敗:', error);
-                }
-            }
-            
-            // 都失敗了
-            if (CONFIG.TEST_MODE) {
+            } else if (CONFIG.TEST_MODE) {
                 loadTestData();
             } else {
-                showError('無法載入題目數據');
+                showError('缺少練習 ID');
             }
         }
         
@@ -582,6 +563,7 @@
 </body>
 
 </html>
+
 
 
 
