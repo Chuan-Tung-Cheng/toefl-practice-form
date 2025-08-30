@@ -336,30 +336,36 @@
         }
         
         // ===== 從URL載入題目 =====
-        function loadQuestionsFromURL() {
+        async function loadQuestionsFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
-            const encodedData = urlParams.get('data');
+            const practiceIdFromUrl = urlParams.get('id');
             
-            if (encodedData) {
+            if (practiceIdFromUrl) {
+                practiceId = practiceIdFromUrl;
+                document.getElementById('practiceId').textContent = practiceId;
+                
                 try {
-                    const decodedData = decodeURIComponent(encodedData);
-                    const data = JSON.parse(decodedData);
-                    questionsData = data.questions || [];
-                    practiceId = data.practiceId || practiceId;
-                    document.getElementById('practiceId').textContent = practiceId;
-                    renderQuestions();
+                    const response = await fetch(`https://albert-cheng.app.n8n.cloud/webhook/get-toefl-practice_from_sheet_practicedata?id=${practiceId}`);
+                    const data = await response.json();
+                    
+                    if (data && data.length > 0 && data[0].data) {
+                        questionsData = data[0].data;
+                        renderQuestions();
+                    } else {
+                        throw new Error('無法取得題目資料');
+                    }
                 } catch (error) {
-                    console.error('解析題目數據失敗:', error);
+                    console.error('載入失敗:', error);
                     if (CONFIG.TEST_MODE) {
                         loadTestData();
                     } else {
-                        showError('無法載入題目，請重新嘗試');
+                        showError('無法載入題目，請重新整理頁面');
                     }
                 }
             } else if (CONFIG.TEST_MODE) {
                 loadTestData();
             } else {
-                showError('未提供題目數據');
+                showError('缺少練習 ID');
             }
         }
         
@@ -560,6 +566,7 @@
 </body>
 
 </html>
+
 
 
 
